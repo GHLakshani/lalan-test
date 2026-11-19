@@ -27,4 +27,34 @@ class WebPagesTest extends TestCase
             ->assertOk()
             ->assertViewIs('profile');
     }
+
+    public function test_service_request_index_page_is_rendered_with_filters(): void
+    {
+        $this->get('/service-requests')
+            ->assertOk()
+            ->assertViewIs('service-requests.index')
+            ->assertSee('js/service-requests.js')
+            ->assertSee('value="urgent"', false)
+            ->assertSee('value="in_progress"', false);
+    }
+
+    public function test_service_request_create_page_is_rendered(): void
+    {
+        $this->get('/service-requests/create')
+            ->assertOk()
+            ->assertViewIs('service-requests.create');
+    }
+
+    public function test_service_request_show_page_is_rendered(): void
+    {
+        $this->get('/service-requests/5')
+            ->assertOk()
+            ->assertViewIs('service-requests.show')
+            ->assertSee('data-request-id="5"', false);
+    }
+
+    public function test_service_request_show_page_requires_numeric_id(): void
+    {
+        $this->get('/service-requests/abc')->assertNotFound();
+    }
 }
