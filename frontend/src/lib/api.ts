@@ -2,9 +2,12 @@ import type {
   NewServiceRequest,
   Paginated,
   ServiceRequest,
+  PermissionOption,
   ServiceRequestFilters,
   StatusChange,
   User,
+  UserFilters,
+  UserInput,
 } from "@/lib/types";
 
 export class ApiError extends Error {
@@ -28,7 +31,7 @@ export class ApiError extends Error {
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost/lalan-test/api").replace(/\/$/, "");
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   token?: string | null;
 };
@@ -65,7 +68,7 @@ async function request<T>(path: string, { method = "GET", body, token }: Request
   return data as T;
 }
 
-function toQuery(filters: ServiceRequestFilters) {
+function toQuery(filters: Record<string, string | number | null | undefined>) {
   const params = new URLSearchParams();
 
   Object.entries(filters).forEach(([key, value]) => {
@@ -120,4 +123,32 @@ export async function updateServiceRequestStatus(token: string, id: string | num
     token,
   });
   return response.data;
+}
+
+export async function fetchPermissions(token: string) {
+  const response = await request<{ data: PermissionOption[] }>("/permissions", { token });
+  return response.data;
+}
+
+export function listUsers(token: string, filters: UserFilters = {}) {
+  return request<Paginated<User>>(`/users${toQuery(filters)}`, { token });
+}
+
+export async function getUser(token: string, id: string | number) {
+  const response = await request<{ data: User }>(`/users/${id}`, { token });
+  return response.data;
+}
+
+export async function createUser(token: string, input: UserInput) {
+  const response = await request<{ data: User }>("/users", { method: "POST", body: input, token });
+  return response.data;
+}
+
+export async function updateUser(token: string, id: string | number, input: UserInput) {
+  const response = await request<{ data: User }>(`/users/${id}`, { method: "PUT", body: input, token });
+  return response.data;
+}
+
+export async function deleteUser(token: string, id: string | number) {
+  await request<unknown>(`/users/${id}`, { method: "DELETE", token });
 }

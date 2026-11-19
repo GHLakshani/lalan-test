@@ -10,6 +10,7 @@ import { Pagination } from "@/components/pagination";
 import { Button, ButtonLink, Card, ErrorState, Skeleton, inputClass } from "@/components/ui";
 import { useAuth } from "@/context/auth-context";
 import { useApi } from "@/hooks/use-api";
+import { PERMISSIONS, can } from "@/lib/permissions";
 import { useRemote } from "@/hooks/use-remote";
 import { formatDate } from "@/lib/format";
 import { PAGE_SIZES, PRIORITIES, STATUSES } from "@/lib/types";
@@ -35,6 +36,7 @@ function parseFilters(params: URLSearchParams): Required<ServiceRequestFilters> 
 export function ServiceRequestList() {
   const api = useApi();
   const { user } = useAuth();
+  const canCreate = can(user, PERMISSIONS.createRequests);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -107,15 +109,17 @@ export function ServiceRequestList() {
       <PageHeader
         title="Service Requests"
         description={
-          user?.is_admin
+          can(user, PERMISSIONS.viewAllRequests)
             ? "Search, filter and browse all service requests."
             : "Search, filter and browse your service requests."
         }
         actions={
-          <ButtonLink href="/service-requests/new">
-            <PlusIcon className="h-4 w-4" />
-            New request
-          </ButtonLink>
+          canCreate ? (
+            <ButtonLink href="/service-requests/new">
+              <PlusIcon className="h-4 w-4" />
+              New request
+            </ButtonLink>
+          ) : undefined
         }
       />
 
@@ -243,7 +247,9 @@ export function ServiceRequestList() {
                           ? "Go back to the first page to see results."
                           : hasFilters
                             ? "Try a different search or clear the filters."
-                            : "Create a request to get started."}
+                            : canCreate
+                              ? "Create a request to get started."
+                              : "Requests you can access will appear here."}
                       </p>
                       <div className="mt-4">
                         {pageOutOfRange ? (
@@ -254,9 +260,9 @@ export function ServiceRequestList() {
                           <Button variant="secondary" onClick={resetFilters}>
                             Clear filters
                           </Button>
-                        ) : (
+                        ) : canCreate ? (
                           <ButtonLink href="/service-requests/new">New request</ButtonLink>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                   </tr>

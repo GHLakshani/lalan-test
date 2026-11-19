@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { dotClass } from "@/components/badge";
 import { ArrowLeftIcon } from "@/components/icons";
 import { PageHeader } from "@/components/page-header";
-import { Alert, Button, ButtonLink, Card, FieldError, Spinner, fieldProps, inputClass } from "@/components/ui";
+import { AccessDenied, Alert, Button, ButtonLink, Card, FieldError, Spinner, fieldProps, inputClass } from "@/components/ui";
+import { useAuth } from "@/context/auth-context";
 import { useApi } from "@/hooks/use-api";
 import { errorMessage, fieldErrors } from "@/lib/errors";
+import { PERMISSIONS, can } from "@/lib/permissions";
 import { PRIORITIES } from "@/lib/types";
 import type { NewServiceRequest } from "@/lib/types";
 
@@ -25,6 +27,7 @@ const priorityHints: Record<string, string> = {
 export default function NewServiceRequestPage() {
   const api = useApi();
   const router = useRouter();
+  const { user } = useAuth();
   const [form, setForm] = useState<NewServiceRequest>({ title: "", description: "", priority: "" });
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [message, setMessage] = useState<string | null>(null);
@@ -33,6 +36,10 @@ export default function NewServiceRequestPage() {
   function update<K extends keyof NewServiceRequest>(key: K, value: NewServiceRequest[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: [] }));
+  }
+
+  if (user && !can(user, PERMISSIONS.createRequests)) {
+    return <AccessDenied message="You do not have permission to create service requests. Ask an administrator for access." />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

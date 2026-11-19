@@ -5,7 +5,7 @@ import { useAuth } from "@/context/auth-context";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { SESSION_EXPIRED } from "@/lib/errors";
-import type { NewServiceRequest, ServiceRequestFilters, StatusChange } from "@/lib/types";
+import type { NewServiceRequest, ServiceRequestFilters, StatusChange, UserFilters, UserInput } from "@/lib/types";
 
 export function useApi() {
   const { token, expire } = useAuth();
@@ -30,6 +30,12 @@ export function useApi() {
       createServiceRequest: (input: NewServiceRequest) => call((t) => api.createServiceRequest(t, input)),
       updateServiceRequestStatus: (id: string | number, change: StatusChange) =>
         call((t) => api.updateServiceRequestStatus(t, id, change)),
+      fetchPermissions: () => call((t) => api.fetchPermissions(t)),
+      listUsers: (filters: UserFilters = {}) => call((t) => api.listUsers(t, filters)),
+      getUser: (id: string | number) => call((t) => api.getUser(t, id)),
+      createUser: (input: UserInput) => call((t) => api.createUser(t, input)),
+      updateUser: (id: string | number, input: UserInput) => call((t) => api.updateUser(t, id, input)),
+      deleteUser: (id: string | number) => call((t) => api.deleteUser(t, id)),
     };
   }, [token, expire]);
 }

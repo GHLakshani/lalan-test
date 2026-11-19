@@ -13,7 +13,9 @@ export function errorMessage(error: unknown, fallback = "Something went wrong. P
     }
 
     if (error.status === 403) {
-      return "You do not have permission to perform this action.";
+      return error.message && error.message !== "This action is unauthorized."
+        ? error.message
+        : "You do not have permission to perform this action.";
     }
 
     if (error.status === 404) {

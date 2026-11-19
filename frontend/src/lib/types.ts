@@ -1,11 +1,41 @@
+export type PermissionValue = "requests.create" | "requests.view_all" | "requests.change_status";
+
+export type Role = "admin" | "member";
+
 export type User = {
   id: number;
   name: string;
   email: string;
+  role: Role;
   is_admin: boolean;
+  permissions: PermissionValue[];
+  service_requests_count?: number;
   email_verified_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type PermissionOption = {
+  value: PermissionValue;
+  label: string;
+  description: string;
+  default: boolean;
+};
+
+export type UserInput = {
+  name: string;
+  email: string;
+  password?: string;
+  password_confirmation?: string;
+  role: Role;
+  permissions: PermissionValue[];
+};
+
+export type UserFilters = {
+  search?: string;
+  role?: Role | "";
+  page?: number;
+  per_page?: number;
 };
 
 export type Priority = "low" | "medium" | "high" | "urgent";

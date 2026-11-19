@@ -4,7 +4,10 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { StatusBadge } from "@/components/badge";
 import { Alert, Button, FieldError, Spinner, fieldProps, inputClass } from "@/components/ui";
+import { LockIcon } from "@/components/icons";
+import { useAuth } from "@/context/auth-context";
 import { useApi } from "@/hooks/use-api";
+import { PERMISSIONS, can } from "@/lib/permissions";
 import { ApiError } from "@/lib/api";
 import { errorMessage, fieldErrors } from "@/lib/errors";
 import type { ServiceRequest } from "@/lib/types";
@@ -21,6 +24,7 @@ export function StatusChangeForm({
   onChange: (request: ServiceRequest) => void;
 }) {
   const api = useApi();
+  const { user } = useAuth();
   const [remark, setRemark] = useState("");
   const [remarkError, setRemarkError] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +102,18 @@ export function StatusChangeForm({
           This request is <StatusBadge status={request.status} />. Resolved is the final status, so the status can no
           longer be changed.
         </div>
+      </div>
+    );
+  }
+
+  if (!can(user, PERMISSIONS.changeStatus)) {
+    return (
+      <div className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600" role="note">
+        <LockIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        <p>
+          You do not have permission to change the status of service requests. Ask an administrator to grant the
+          &ldquo;Change request status&rdquo; permission.
+        </p>
       </div>
     );
   }

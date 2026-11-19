@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/page-header";
 import { ButtonLink, Card, ErrorState, Skeleton } from "@/components/ui";
 import { useAuth } from "@/context/auth-context";
 import { useApi } from "@/hooks/use-api";
+import { PERMISSIONS, can } from "@/lib/permissions";
 import { useRemote } from "@/hooks/use-remote";
 import { formatDate } from "@/lib/format";
 import { PRIORITIES, STATUSES } from "@/lib/types";
@@ -108,10 +109,12 @@ export default function DashboardPage() {
             : "Here is an overview of your service desk."
         }
         actions={
-          <ButtonLink href="/service-requests/new">
-            <PlusIcon className="h-4 w-4" />
-            New request
-          </ButtonLink>
+          can(user, PERMISSIONS.createRequests) ? (
+            <ButtonLink href="/service-requests/new">
+              <PlusIcon className="h-4 w-4" />
+              New request
+            </ButtonLink>
+          ) : undefined
         }
       />
 

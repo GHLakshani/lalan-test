@@ -24,10 +24,12 @@ export function Pagination({
   meta,
   onPageChange,
   disabled = false,
+  noun = "requests",
 }: {
   meta: PaginationMeta;
   onPageChange: (page: number) => void;
   disabled?: boolean;
+  noun?: string;
 }) {
   const { current_page: current, last_page: last, from, to, total } = meta;
 
@@ -41,10 +43,10 @@ export function Pagination({
           <>
             Showing <span className="font-medium text-slate-700">{from}</span> to{" "}
             <span className="font-medium text-slate-700">{to}</span> of{" "}
-            <span className="font-medium text-slate-700">{total}</span> requests
+            <span className="font-medium text-slate-700">{total}</span> {noun}
           </>
         ) : (
-          "No requests found"
+          `No ${noun} found`
         )}
       </p>
 

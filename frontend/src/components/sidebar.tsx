@@ -11,34 +11,68 @@ import {
   MenuIcon,
   PlusIcon,
   UserIcon,
+  UsersIcon,
 } from "@/components/icons";
 import { useAuth } from "@/context/auth-context";
 import { initials } from "@/lib/format";
+import { PERMISSIONS, can } from "@/lib/permissions";
+import type { User } from "@/lib/types";
 
-const navigation = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof DashboardIcon;
+  isActive: (path: string) => boolean;
+  visible: (user: User | null) => boolean;
+};
+
+const always = () => true;
+
+const sections: { title: string; items: NavItem[] }[] = [
   {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: DashboardIcon,
-    isActive: (path: string) => path === "/dashboard",
+    title: "Menu",
+    items: [
+      {
+        href: "/dashboard",
+        label: "Dashboard",
+        icon: DashboardIcon,
+        isActive: (path) => path === "/dashboard",
+        visible: always,
+      },
+      {
+        href: "/service-requests",
+        label: "Service Requests",
+        icon: ListIcon,
+        isActive: (path) => path === "/service-requests" || /^\/service-requests\/\d+/.test(path),
+        visible: always,
+      },
+      {
+        href: "/service-requests/new",
+        label: "New Request",
+        icon: PlusIcon,
+        isActive: (path) => path === "/service-requests/new",
+        visible: (user) => can(user, PERMISSIONS.createRequests),
+      },
+      {
+        href: "/profile",
+        label: "Profile",
+        icon: UserIcon,
+        isActive: (path) => path === "/profile",
+        visible: always,
+      },
+    ],
   },
   {
-    href: "/service-requests",
-    label: "Service Requests",
-    icon: ListIcon,
-    isActive: (path: string) => path === "/service-requests" || /^\/service-requests\/\d+/.test(path),
-  },
-  {
-    href: "/service-requests/new",
-    label: "New Request",
-    icon: PlusIcon,
-    isActive: (path: string) => path === "/service-requests/new",
-  },
-  {
-    href: "/profile",
-    label: "Profile",
-    icon: UserIcon,
-    isActive: (path: string) => path === "/profile",
+    title: "Administration",
+    items: [
+      {
+        href: "/users",
+        label: "Users",
+        icon: UsersIcon,
+        isActive: (path) => path === "/users" || path.startsWith("/users/"),
+        visible: (user) => Boolean(user?.is_admin),
+      },
+    ],
   },
 ];
 
@@ -53,30 +87,55 @@ function Brand() {
   );
 }
 
-function NavLinks({ pathname, onNavigate }: { pathname: string | null; onNavigate: () => void }) {
-  return navigation.map((item) => {
-    const active = pathname !== null && item.isActive(pathname);
-    const Icon = item.icon;
+function NavLinks({
+  pathname,
+  user,
+  onNavigate,
+}: {
+  pathname: string | null;
+  user: User | null;
+  onNavigate: () => void;
+}) {
+  return sections.map((section) => {
+    const items = section.items.filter((item) => item.visible(user));
+
+    if (items.length === 0) {
+      return null;
+    }
 
     return (
-      <Link
-        key={item.href}
-        href={item.href}
-        onClick={onNavigate}
-        aria-current={active ? "page" : undefined}
-        className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-          active ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
-        }`}
-      >
-        <Icon className={`h-5 w-5 shrink-0 ${active ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
-        {item.label}
-      </Link>
+      <div key={section.title} className="space-y-1">
+        <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          {section.title}
+        </p>
+        {items.map((item) => {
+          const active = pathname !== null && item.isActive(pathname);
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                active ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+              }`}
+            >
+              <Icon
+                className={`h-5 w-5 shrink-0 ${active ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`}
+              />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
     );
   });
 }
 
-function ActiveNavLinks({ onNavigate }: { onNavigate: () => void }) {
-  return <NavLinks pathname={usePathname()} onNavigate={onNavigate} />;
+function ActiveNavLinks({ user, onNavigate }: { user: User | null; onNavigate: () => void }) {
+  return <NavLinks pathname={usePathname()} user={user} onNavigate={onNavigate} />;
 }
 
 export function Sidebar() {
@@ -105,10 +164,9 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Menu</p>
-        <Suspense fallback={<NavLinks pathname={null} onNavigate={() => setOpen(false)} />}>
-          <ActiveNavLinks onNavigate={() => setOpen(false)} />
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Main">
+        <Suspense fallback={<NavLinks pathname={null} user={user} onNavigate={() => setOpen(false)} />}>
+          <ActiveNavLinks user={user} onNavigate={() => setOpen(false)} />
         </Suspense>
       </nav>
 

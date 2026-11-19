@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
+import { LockIcon } from "@/components/icons";
 import { errorMessage, isStatus } from "@/lib/errors";
 
 const buttonBase =
@@ -9,6 +10,7 @@ const variants = {
   primary: "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500",
   secondary: "bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50",
   ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+  danger: "bg-rose-600 text-white shadow-sm hover:bg-rose-500 focus-visible:ring-rose-500",
 };
 
 type Variant = keyof typeof variants;
@@ -92,6 +94,21 @@ export function ErrorState({
           Try again
         </Button>
       )}
+    </Card>
+  );
+}
+
+export function AccessDenied({ message }: { message: string }) {
+  return (
+    <Card className="px-6 py-14 text-center" role="alert">
+      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
+        <LockIcon className="h-6 w-6" />
+      </span>
+      <p className="mt-4 text-lg font-semibold text-slate-900">Access denied</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">{message}</p>
+      <ButtonLink href="/dashboard" variant="secondary" className="mt-6">
+        Back to dashboard
+      </ButtonLink>
     </Card>
   );
 }

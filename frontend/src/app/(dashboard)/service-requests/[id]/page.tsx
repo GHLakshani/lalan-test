@@ -7,7 +7,9 @@ import { useServiceRequest } from "@/components/request-context";
 import { StatusTimeline } from "@/components/status-timeline";
 import { Alert, ButtonLink, Card, Skeleton } from "@/components/ui";
 import { WorkflowStepper } from "@/components/workflow-stepper";
+import { useAuth } from "@/context/auth-context";
 import { formatDateTime, initials } from "@/lib/format";
+import { PERMISSIONS, can } from "@/lib/permissions";
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -20,6 +22,8 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 export default function RequestDetailsPage() {
   const { request } = useServiceRequest();
+  const { user } = useAuth();
+  const canChangeStatus = can(user, PERMISSIONS.changeStatus);
   const created = useSearchParams().get("created") === "1";
   const history = request?.status_history ?? [];
   const recent = [...history].sort((a, b) => b.version - a.version).slice(0, 3);
@@ -80,10 +84,12 @@ export default function RequestDetailsPage() {
                 <div className="mt-6 px-1">
                   <WorkflowStepper current={request.status.value} />
                 </div>
-                {request.next_status ? (
+                {request.next_status && canChangeStatus ? (
                   <ButtonLink href={`${base}/status`} className="mt-6 w-full">
                     Change status
                   </ButtonLink>
+                ) : request.next_status ? (
+                  <p className="mt-6 text-sm text-slate-500">You do not have permission to change the status.</p>
                 ) : (
                   <p className="mt-6 text-sm text-slate-500">Resolved is the final status. No further changes are allowed.</p>
                 )}
