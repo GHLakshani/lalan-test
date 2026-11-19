@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('from_status')->nullable();
             $table->string('to_status');
             $table->unsignedInteger('version');
+            $table->text('remark')->nullable();
             $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('created_at')->nullable();
 

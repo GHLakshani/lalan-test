@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\ChangeServiceRequestStatus;
+use App\Enums\ServiceRequestStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ServiceRequest\IndexServiceRequestRequest;
 use App\Http\Requests\ServiceRequest\StoreServiceRequestRequest;
+use App\Http\Requests\ServiceRequest\UpdateServiceRequestStatusRequest;
 use App\Http\Resources\ServiceRequestResource;
 use App\Models\ServiceRequest;
 use Illuminate\Http\JsonResponse;
@@ -41,5 +44,21 @@ class ServiceRequestController extends Controller
     public function show(ServiceRequest $serviceRequest): ServiceRequestResource
     {
         return ServiceRequestResource::make($serviceRequest->load(['user', 'statusHistories.changedBy']));
+    }
+
+    public function updateStatus(
+        UpdateServiceRequestStatusRequest $request,
+        ServiceRequest $serviceRequest,
+        ChangeServiceRequestStatus $changeStatus,
+    ): ServiceRequestResource {
+        $updated = $changeStatus->handle(
+            $serviceRequest,
+            ServiceRequestStatus::from($request->validated('status')),
+            (int) $request->validated('version'),
+            $request->user(),
+            $request->validated('remark'),
+        );
+
+        return ServiceRequestResource::make($updated->load(['user', 'statusHistories.changedBy']));
     }
 }

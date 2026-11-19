@@ -20,6 +20,7 @@ class StatusHistoryResource extends JsonResource
                 'label' => $this->to_status->label(),
             ],
             'version' => $this->version,
+            'remark' => $this->remark,
             'changed_by' => $this->whenLoaded('changedBy', fn () => $this->changedBy ? [
                 'id' => $this->changedBy->id,
                 'name' => $this->changedBy->name,

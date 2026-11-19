@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['from_status', 'to_status', 'version', 'changed_by'])]
+#[Fillable(['from_status', 'to_status', 'version', 'remark', 'changed_by'])]
 class ServiceRequestStatusHistory extends Model
 {
     const UPDATED_AT = null;

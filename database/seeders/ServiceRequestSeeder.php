@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Actions\ChangeServiceRequestStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Models\ServiceRequest;
 use App\Models\User;
@@ -11,12 +12,24 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceRequestSeeder extends Seeder
 {
-    private const WORKFLOW = [
-        ServiceRequestStatus::Open,
-        ServiceRequestStatus::InProgress,
-        ServiceRequestStatus::Resolved,
-        ServiceRequestStatus::Closed,
+    private const REMARKS = [
+        ServiceRequestStatus::InProgress->value => [
+            'Assigned to the support team.',
+            'Looking into this now.',
+            'Waiting on parts, work has started.',
+            null,
+        ],
+        ServiceRequestStatus::Resolved->value => [
+            'Issue fixed and confirmed with the requester.',
+            'Replaced the faulty part.',
+            'Configuration updated, working as expected.',
+            null,
+        ],
     ];
+
+    public function __construct(private readonly ChangeServiceRequestStatus $changeStatus)
+    {
+    }
 
     public function run(): void
     {
@@ -41,8 +54,7 @@ class ServiceRequestSeeder extends Seeder
 
     private function seedRequest(User $owner, User $agent): void
     {
-        $finalStatus = fake()->randomElement(self::WORKFLOW);
-        $steps = array_slice(self::WORKFLOW, 1, array_search($finalStatus, self::WORKFLOW, true));
+        $finalStatus = fake()->randomElement(ServiceRequestStatus::cases());
         $time = Carbon::now()->subDays(fake()->numberBetween(8, 45))->subMinutes(fake()->numberBetween(0, 1440));
 
         Carbon::setTestNow($time);
@@ -53,13 +65,19 @@ class ServiceRequestSeeder extends Seeder
             ->status(ServiceRequestStatus::Open)
             ->create();
 
-        foreach ($steps as $status) {
+        while ($serviceRequest->status !== $finalStatus) {
+            $next = $serviceRequest->status->next();
             $time = $time->copy()->addHours(fake()->numberBetween(2, 48));
 
             Carbon::setTestNow($time);
-            Auth::setUser($agent);
 
-            $serviceRequest->update(['status' => $status]);
+            $serviceRequest = $this->changeStatus->handle(
+                $serviceRequest,
+                $next,
+                $serviceRequest->version,
+                $agent,
+                fake()->randomElement(self::REMARKS[$next->value]),
+            );
         }
 
         Carbon::setTestNow();

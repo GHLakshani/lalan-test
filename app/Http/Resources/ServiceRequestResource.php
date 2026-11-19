@@ -21,6 +21,10 @@ class ServiceRequestResource extends JsonResource
                 'value' => $this->status->value,
                 'label' => $this->status->label(),
             ],
+            'next_status' => $this->status->next() ? [
+                'value' => $this->status->next()->value,
+                'label' => $this->status->next()->label(),
+            ] : null,
             'version' => $this->version,
             'requested_by' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,

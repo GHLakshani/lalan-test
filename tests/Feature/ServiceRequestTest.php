@@ -63,7 +63,7 @@ class ServiceRequestTest extends TestCase
             'title' => 'Laptop battery',
             'description' => 'Battery drains quickly.',
             'priority' => 'low',
-            'status' => 'closed',
+            'status' => 'resolved',
             'user_id' => $other->id,
         ])
             ->assertCreated()
@@ -216,7 +216,7 @@ class ServiceRequestTest extends TestCase
         ServiceRequest::factory()->for($this->user)->create([
             'title' => 'VPN slow',
             'priority' => ServiceRequestPriority::High,
-            'status' => ServiceRequestStatus::Closed,
+            'status' => ServiceRequestStatus::Resolved,
         ]);
 
         $this->getJson('/api/service-requests?search=vpn&priority=high&status=in_progress')

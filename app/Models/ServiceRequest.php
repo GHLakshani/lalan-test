@@ -11,8 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use LogicException;
 
-#[Fillable(['title', 'description', 'priority', 'status'])]
+#[Fillable(['title', 'description', 'priority'])]
 class ServiceRequest extends Model
 {
     use HasFactory;
@@ -25,17 +26,20 @@ class ServiceRequest extends Model
     protected static function booted(): void
     {
         static::updating(function (ServiceRequest $serviceRequest) {
+            if ($serviceRequest->isDirty('status')) {
+                throw new LogicException('Service request status can only be changed through the ChangeServiceRequestStatus action.');
+            }
+
             $serviceRequest->version = (int) $serviceRequest->getOriginal('version') + 1;
         });
 
         static::created(function (ServiceRequest $serviceRequest) {
-            $serviceRequest->recordStatusChange(null, Auth::id() ?? $serviceRequest->user_id);
-        });
-
-        static::updated(function (ServiceRequest $serviceRequest) {
-            if ($serviceRequest->wasChanged('status')) {
-                $serviceRequest->recordStatusChange($serviceRequest->getOriginal('status'), Auth::id());
-            }
+            $serviceRequest->statusHistories()->create([
+                'from_status' => null,
+                'to_status' => $serviceRequest->status,
+                'version' => $serviceRequest->version,
+                'changed_by' => Auth::id() ?? $serviceRequest->user_id,
+            ]);
         });
     }
 
@@ -77,15 +81,5 @@ class ServiceRequest extends Model
     public function scopeStatus(Builder $query, ?string $status): Builder
     {
         return $query->when($status, fn (Builder $q) => $q->where('status', $status));
-    }
-
-    protected function recordStatusChange(?ServiceRequestStatus $from, ?int $changedBy): void
-    {
-        $this->statusHistories()->create([
-            'from_status' => $from,
-            'to_status' => $this->status,
-            'version' => $this->version,
-            'changed_by' => $changedBy,
-        ]);
     }
 }

@@ -12,4 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('service-requests', ServiceRequestController::class)
         ->only(['index', 'store', 'show']);
+
+    Route::patch('service-requests/{service_request}/status', [ServiceRequestController::class, 'updateStatus'])
+        ->name('service-requests.status.update');
 });

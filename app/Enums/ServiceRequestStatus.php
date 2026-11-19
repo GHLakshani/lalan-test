@@ -7,7 +7,6 @@ enum ServiceRequestStatus: string
     case Open = 'open';
     case InProgress = 'in_progress';
     case Resolved = 'resolved';
-    case Closed = 'closed';
 
     public function label(): string
     {
@@ -15,7 +14,25 @@ enum ServiceRequestStatus: string
             self::Open => 'Open',
             self::InProgress => 'In Progress',
             self::Resolved => 'Resolved',
-            self::Closed => 'Closed',
         };
+    }
+
+    public function next(): ?self
+    {
+        return match ($this) {
+            self::Open => self::InProgress,
+            self::InProgress => self::Resolved,
+            self::Resolved => null,
+        };
+    }
+
+    public function canTransitionTo(self $status): bool
+    {
+        return $this->next() === $status;
+    }
+
+    public function isFinal(): bool
+    {
+        return $this->next() === null;
     }
 }
