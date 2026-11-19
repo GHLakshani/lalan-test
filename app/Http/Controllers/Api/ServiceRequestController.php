@@ -33,13 +33,13 @@ class ServiceRequestController extends Controller
             ->serviceRequests()
             ->create($request->validated());
 
-        return ServiceRequestResource::make($serviceRequest->refresh()->load('user'))
+        return ServiceRequestResource::make($serviceRequest->refresh()->load(['user', 'statusHistories.changedBy']))
             ->response()
             ->setStatusCode(201);
     }
 
     public function show(ServiceRequest $serviceRequest): ServiceRequestResource
     {
-        return ServiceRequestResource::make($serviceRequest->load('user'));
+        return ServiceRequestResource::make($serviceRequest->load(['user', 'statusHistories.changedBy']));
     }
 }
