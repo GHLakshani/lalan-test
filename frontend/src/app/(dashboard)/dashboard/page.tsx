@@ -57,8 +57,8 @@ function StatCard({
 }) {
   return (
     <Link href={href} className="group">
-      <Card className="flex items-center gap-4 p-5 transition group-hover:border-indigo-200 group-hover:shadow-md">
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+      <Card className="flex items-center gap-4 p-4 transition group-hover:border-indigo-200 group-hover:shadow-md sm:p-5">
+        <span className={`hidden h-11 w-11 shrink-0 items-center justify-center rounded-lg sm:flex ${tone}`} aria-hidden="true">
           <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0">
@@ -119,7 +119,7 @@ export default function DashboardPage() {
         <ErrorState error={error} onRetry={reload} title="Unable to load the dashboard" />
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatCard
               href="/service-requests"
               label="Total requests"

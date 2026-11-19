@@ -12,7 +12,7 @@ export function WorkflowStepper({ current }: { current: Status }) {
         const last = index === STATUSES.length - 1;
 
         return (
-          <li key={status.value} className={`relative flex flex-col items-center ${last ? "" : "flex-1"}`}>
+          <li key={status.value} className="relative flex flex-1 flex-col items-center">
             {!last && (
               <span
                 className={`absolute left-1/2 top-3.5 h-0.5 w-full ${done ? "bg-indigo-600" : "bg-slate-200"}`}
