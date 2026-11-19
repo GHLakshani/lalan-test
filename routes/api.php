@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ServiceRequestController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
@@ -15,4 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::patch('service-requests/{service_request}/status', [ServiceRequestController::class, 'updateStatus'])
         ->name('service-requests.status.update');
+
+    Route::get('/permissions', [UserController::class, 'permissions']);
+    Route::apiResource('users', UserController::class);
 });

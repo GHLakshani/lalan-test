@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Permission;
 use App\Enums\ServiceRequestPriority;
 use App\Enums\ServiceRequestStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -54,7 +55,7 @@ class ServiceRequest extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function statusHistories(): HasMany
@@ -66,7 +67,7 @@ class ServiceRequest extends Model
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $user->isAdmin() ? $query : $query->whereBelongsTo($user);
+        return $user->hasPermission(Permission::ViewAllRequests) ? $query : $query->whereBelongsTo($user);
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

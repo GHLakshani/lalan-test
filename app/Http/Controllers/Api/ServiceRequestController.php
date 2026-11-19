@@ -34,6 +34,8 @@ class ServiceRequestController extends Controller
 
     public function store(StoreServiceRequestRequest $request): JsonResponse
     {
+        Gate::authorize('create', ServiceRequest::class);
+
         $serviceRequest = $request->user()
             ->serviceRequests()
             ->create($request->validated());
