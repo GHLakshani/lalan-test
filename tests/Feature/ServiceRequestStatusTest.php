@@ -202,8 +202,8 @@ class ServiceRequestStatusTest extends TestCase
 
     public function test_two_users_with_the_same_version_only_first_wins(): void
     {
-        $first = User::factory()->create();
-        $second = User::factory()->create();
+        $first = User::factory()->admin()->create();
+        $second = User::factory()->admin()->create();
         $serviceRequest = $this->openRequest();
 
         Sanctum::actingAs($first);

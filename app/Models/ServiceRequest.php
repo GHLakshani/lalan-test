@@ -64,6 +64,11 @@ class ServiceRequest extends Model
             ->latest('id');
     }
 
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $user->isAdmin() ? $query : $query->whereBelongsTo($user);
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (blank($term)) {

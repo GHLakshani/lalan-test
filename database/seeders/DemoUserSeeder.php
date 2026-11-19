@@ -10,12 +10,12 @@ class DemoUserSeeder extends Seeder
     public function run(): void
     {
         $accounts = [
-            ['name' => 'Demo Admin', 'email' => 'admin@example.com'],
-            ['name' => 'Demo User', 'email' => 'user@example.com'],
+            ['name' => 'Demo Admin', 'email' => 'admin@example.com', 'is_admin' => true],
+            ['name' => 'Demo User', 'email' => 'user@example.com', 'is_admin' => false],
         ];
 
         foreach ($accounts as $account) {
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $account['email']],
                 [
                     'name' => $account['name'],
@@ -23,6 +23,8 @@ class DemoUserSeeder extends Seeder
                     'email_verified_at' => now(),
                 ],
             );
+
+            $user->forceFill(['is_admin' => $account['is_admin']])->save();
         }
     }
 }

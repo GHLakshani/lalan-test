@@ -13,10 +13,11 @@ export default function ProfilePage() {
         { label: "User ID", value: `#${user.id}` },
         { label: "Full name", value: user.name },
         { label: "Email address", value: user.email },
+        { label: "Role", value: user.is_admin ? "Administrator (can manage all requests)" : "Member (can manage own requests)" },
         { label: "Email verified", value: formatDateTime(user.email_verified_at, "Not verified") },
         { label: "Member since", value: formatDateTime(user.created_at) },
       ]
-    : ["User ID", "Full name", "Email address", "Email verified", "Member since"].map((label) => ({
+    : ["User ID", "Full name", "Email address", "Role", "Email verified", "Member since"].map((label) => ({
         label,
         value: null,
       }));

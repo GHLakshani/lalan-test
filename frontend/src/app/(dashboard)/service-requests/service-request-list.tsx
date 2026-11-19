@@ -8,6 +8,7 @@ import { PlusIcon, SearchIcon } from "@/components/icons";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { Button, ButtonLink, Card, ErrorState, Skeleton, inputClass } from "@/components/ui";
+import { useAuth } from "@/context/auth-context";
 import { useApi } from "@/hooks/use-api";
 import { useRemote } from "@/hooks/use-remote";
 import { formatDate } from "@/lib/format";
@@ -33,6 +34,7 @@ function parseFilters(params: URLSearchParams): Required<ServiceRequestFilters> 
 
 export function ServiceRequestList() {
   const api = useApi();
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -104,7 +106,11 @@ export function ServiceRequestList() {
     <>
       <PageHeader
         title="Service Requests"
-        description="Search, filter and browse all service requests."
+        description={
+          user?.is_admin
+            ? "Search, filter and browse all service requests."
+            : "Search, filter and browse your service requests."
+        }
         actions={
           <ButtonLink href="/service-requests/new">
             <PlusIcon className="h-4 w-4" />

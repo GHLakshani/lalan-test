@@ -12,6 +12,7 @@ use App\Http\Resources\ServiceRequestResource;
 use App\Models\ServiceRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class ServiceRequestController extends Controller
 {
@@ -19,6 +20,7 @@ class ServiceRequestController extends Controller
     {
         $serviceRequests = ServiceRequest::query()
             ->with('user')
+            ->visibleTo($request->user())
             ->search($request->validated('search'))
             ->priority($request->validated('priority'))
             ->status($request->validated('status'))
@@ -43,6 +45,8 @@ class ServiceRequestController extends Controller
 
     public function show(ServiceRequest $serviceRequest): ServiceRequestResource
     {
+        Gate::authorize('view', $serviceRequest);
+
         return ServiceRequestResource::make($serviceRequest->load(['user', 'statusHistories.changedBy']));
     }
 
@@ -51,6 +55,8 @@ class ServiceRequestController extends Controller
         ServiceRequest $serviceRequest,
         ChangeServiceRequestStatus $changeStatus,
     ): ServiceRequestResource {
+        Gate::authorize('updateStatus', $serviceRequest);
+
         $updated = $changeStatus->handle(
             $serviceRequest,
             ServiceRequestStatus::from($request->validated('status')),
