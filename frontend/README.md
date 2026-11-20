@@ -12,7 +12,7 @@ Next.js frontend for the Laravel service request API in the parent folder.
 | Create Request    | `/service-requests/new`            | Submit a new request                                           |
 | Request Details   | `/service-requests/{id}`           | Request information, current status and version                |
 | Status Management | `/service-requests/{id}/status`    | Move to the next status with an optional remark                |
-| History           | `/service-requests/{id}/history`   | Chronological status changes                                   |
+| History           | `/service-requests/{id}/history`   | Chronological status changes from `GET /api/requests/{id}/history` |
 | Profile           | `/profile`                         | Signed-in user details, role and permissions                   |
 | Users             | `/users`                           | Administrators: search users, edit and delete                  |
 | Add User          | `/users/new`                       | Administrators: create a user with a role and permissions      |
@@ -45,7 +45,6 @@ Open http://localhost:3000.
 |------------|-------------------|----------|
 | Demo Admin | admin@example.com | password |
 | Demo User  | user@example.com  | password |
-| Support Agent | agent@example.com | password |
 
 ## Scripts
 
