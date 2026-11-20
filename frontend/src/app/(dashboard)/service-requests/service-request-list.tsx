@@ -108,11 +108,7 @@ export function ServiceRequestList() {
     <>
       <PageHeader
         title="Service Requests"
-        description={
-          can(user, PERMISSIONS.viewAllRequests)
-            ? "Search, filter and browse all service requests."
-            : "Search, filter and browse your service requests."
-        }
+        description="Search, filter and browse your service requests."
         actions={
           canCreate ? (
             <ButtonLink href="/service-requests/new">

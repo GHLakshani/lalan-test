@@ -27,6 +27,7 @@ export function useApi() {
       listServiceRequests: (filters: ServiceRequestFilters = {}) =>
         call((t) => api.listServiceRequests(t, filters)),
       getServiceRequest: (id: string | number) => call((t) => api.getServiceRequest(t, id)),
+      getServiceRequestHistory: (id: string | number) => call((t) => api.getServiceRequestHistory(t, id)),
       createServiceRequest: (input: NewServiceRequest) => call((t) => api.createServiceRequest(t, input)),
       updateServiceRequestStatus: (id: string | number, change: StatusChange) =>
         call((t) => api.updateServiceRequestStatus(t, id, change)),

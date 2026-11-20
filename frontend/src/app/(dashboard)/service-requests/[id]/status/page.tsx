@@ -56,7 +56,7 @@ export default function StatusManagementPage() {
                     <dt className="text-slate-500">Last changed</dt>
                     <dd className="text-right text-slate-900">
                       {formatDateTime(lastChange.created_at)}
-                      <span className="block text-xs text-slate-500">by {lastChange.changed_by?.name ?? "System"}</span>
+                      <span className="block text-xs text-slate-500">by {lastChange.actor?.name ?? "System"}</span>
                     </dd>
                   </div>
                 )}

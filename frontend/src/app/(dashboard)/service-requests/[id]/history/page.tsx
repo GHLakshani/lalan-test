@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useServiceRequest } from "@/components/request-context";
 import { StatusTimeline } from "@/components/status-timeline";
-import { Card, Skeleton } from "@/components/ui";
+import { Card, ErrorState, Skeleton } from "@/components/ui";
+import { useApi } from "@/hooks/use-api";
+import { useRemote } from "@/hooks/use-remote";
 
 const orders = [
   { value: "asc", label: "Oldest first" },
@@ -11,9 +13,19 @@ const orders = [
 ] as const;
 
 export default function StatusHistoryPage() {
+  const api = useApi();
   const { request } = useServiceRequest();
   const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const history = request?.status_history ?? [];
+
+  const id = request?.id;
+  const fetchHistory = useCallback(() => api.getServiceRequestHistory(id ?? 0), [api, id]);
+  const key = api.ready && request ? `${request.id}:${request.version}` : null;
+  const { data, error, loading, reload } = useRemote(key, fetchHistory);
+  const history = loading ? null : data;
+
+  if (error) {
+    return <ErrorState error={error} onRetry={reload} title="Unable to load the status history" />;
+  }
 
   return (
     <Card>
@@ -21,7 +33,7 @@ export default function StatusHistoryPage() {
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Status history</h2>
           <p className="mt-0.5 text-sm text-slate-500">
-            {request
+            {history
               ? `${history.length} ${history.length === 1 ? "entry" : "entries"} in chronological order. Every change is recorded with its version.`
               : "Loading history..."}
           </p>
@@ -45,7 +57,7 @@ export default function StatusHistoryPage() {
       </div>
 
       <div className="p-6">
-        {request ? (
+        {history ? (
           <StatusTimeline entries={history} order={order} />
         ) : (
           <div className="space-y-6" aria-busy="true">

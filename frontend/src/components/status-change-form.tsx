@@ -45,7 +45,7 @@ export function StatusChangeForm({
     try {
       const updated = await api.updateServiceRequestStatus(request.id, {
         status: next.value,
-        version: request.version,
+        expected_version: request.version,
         remark: remark.trim() === "" ? undefined : remark.trim(),
       });
 
@@ -56,7 +56,9 @@ export function StatusChangeForm({
         message: `Status changed to ${updated.status.label}. This request is now version ${updated.version}.`,
       });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
+      if (error instanceof ApiError && error.status === 409 && error.payload.current_version === undefined) {
+        setFeedback({ tone: "error", message: error.errors.status?.[0] ?? error.message });
+      } else if (error instanceof ApiError && error.status === 409) {
         const latest = error.payload.data as ServiceRequest | null | undefined;
 
         if (latest) {
@@ -72,7 +74,7 @@ export function StatusChangeForm({
         setRemarkError(errors.remark?.[0]);
         setFeedback({
           tone: "error",
-          message: errors.status?.[0] ?? errors.version?.[0] ?? (errors.remark ? "Please fix the remark and try again." : errorMessage(error)),
+          message: errors.status?.[0] ?? errors.expected_version?.[0] ?? (errors.remark ? "Please fix the remark and try again." : errorMessage(error)),
         });
       }
     } finally {

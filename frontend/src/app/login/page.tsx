@@ -8,8 +8,7 @@ import { errorMessage, fieldErrors } from "@/lib/errors";
 
 const demoAccounts = [
   { label: "Demo Admin", email: "admin@example.com", access: "Administrator" },
-  { label: "Demo User", email: "user@example.com", access: "Own requests" },
-  { label: "Support Agent", email: "agent@example.com", access: "All requests, no create" },
+  { label: "Demo User", email: "user@example.com", access: "Member" },
 ];
 
 export default function LoginPage() {

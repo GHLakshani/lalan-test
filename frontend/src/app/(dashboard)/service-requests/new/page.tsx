@@ -14,14 +14,15 @@ import { PERMISSIONS, can } from "@/lib/permissions";
 import { PRIORITIES } from "@/lib/types";
 import type { NewServiceRequest } from "@/lib/types";
 
-const TITLE_LIMIT = 255;
-const DESCRIPTION_LIMIT = 5000;
+const TITLE_LIMIT = 100;
+const TITLE_MIN = 3;
+const DESCRIPTION_LIMIT = 500;
+const DESCRIPTION_MIN = 10;
 
 const priorityHints: Record<string, string> = {
-  low: "Minor issue, no rush",
-  medium: "Needs attention soon",
-  high: "Affects daily work",
-  urgent: "Work is blocked",
+  LOW: "Minor issue, no rush",
+  MEDIUM: "Needs attention soon",
+  HIGH: "Affects or blocks daily work",
 };
 
 export default function NewServiceRequestPage() {
@@ -89,13 +90,14 @@ export default function NewServiceRequestPage() {
                   Title <span className="text-rose-600" aria-hidden="true">*</span>
                 </label>
                 <span className="text-xs text-slate-500">
-                  {form.title.length}/{TITLE_LIMIT}
+                  {TITLE_MIN}–{TITLE_LIMIT} characters · {form.title.length}/{TITLE_LIMIT}
                 </span>
               </div>
               <input
                 {...fieldProps("title", errors.title?.[0])}
                 required
                 type="text"
+                minLength={TITLE_MIN}
                 maxLength={TITLE_LIMIT}
                 placeholder="Short summary of the issue"
                 value={form.title}
@@ -111,13 +113,14 @@ export default function NewServiceRequestPage() {
                   Description <span className="text-rose-600" aria-hidden="true">*</span>
                 </label>
                 <span className="text-xs text-slate-500">
-                  {form.description.length}/{DESCRIPTION_LIMIT}
+                  {DESCRIPTION_MIN}–{DESCRIPTION_LIMIT} characters · {form.description.length}/{DESCRIPTION_LIMIT}
                 </span>
               </div>
               <textarea
                 {...fieldProps("description", errors.description?.[0])}
                 required
                 rows={6}
+                minLength={DESCRIPTION_MIN}
                 maxLength={DESCRIPTION_LIMIT}
                 placeholder="What happened, where, and any steps you have already tried"
                 value={form.description}
@@ -131,7 +134,7 @@ export default function NewServiceRequestPage() {
               <legend className="text-sm font-medium text-slate-700">
                 Priority <span className="text-rose-600" aria-hidden="true">*</span>
               </legend>
-              <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {PRIORITIES.map((option) => {
                   const selected = form.priority === option.value;
 

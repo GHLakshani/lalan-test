@@ -65,7 +65,7 @@ export function StatusTimeline({
               )}
 
               <p className="mt-1.5 text-xs text-slate-500">
-                <span className="font-medium text-slate-700">{entry.changed_by?.name ?? "System"}</span>
+                <span className="font-medium text-slate-700">{entry.actor?.name ?? "System"}</span>
                 <span className="mx-1.5 text-slate-300" aria-hidden="true">
                   &middot;
                 </span>

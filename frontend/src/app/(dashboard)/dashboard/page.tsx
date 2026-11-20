@@ -28,9 +28,9 @@ type Summary = {
 };
 
 const statCards: { status: Status; label: string; icon: typeof InboxIcon; tone: string }[] = [
-  { status: "open", label: "Open", icon: InboxIcon, tone: "bg-blue-50 text-blue-600" },
-  { status: "in_progress", label: "In Progress", icon: ClockIcon, tone: "bg-violet-50 text-violet-600" },
-  { status: "resolved", label: "Resolved", icon: CheckCircleIcon, tone: "bg-emerald-50 text-emerald-600" },
+  { status: "OPEN", label: "Open", icon: InboxIcon, tone: "bg-blue-50 text-blue-600" },
+  { status: "IN_PROGRESS", label: "In Progress", icon: ClockIcon, tone: "bg-violet-50 text-violet-600" },
+  { status: "RESOLVED", label: "Resolved", icon: CheckCircleIcon, tone: "bg-emerald-50 text-emerald-600" },
 ];
 
 function greeting() {
@@ -196,7 +196,7 @@ export default function DashboardPage() {
 
             <Card className="p-5">
               <h2 className="font-semibold text-slate-900">Requests by priority</h2>
-              <p className="mt-1 text-sm text-slate-500">Share of all requests</p>
+              <p className="mt-1 text-sm text-slate-500">Share of your requests</p>
 
               <ul className="mt-5 space-y-4">
                 {PRIORITIES.map((priority) => {

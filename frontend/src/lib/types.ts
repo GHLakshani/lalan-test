@@ -1,4 +1,4 @@
-export type PermissionValue = "requests.create" | "requests.view_all" | "requests.change_status";
+export type PermissionValue = "requests.create" | "requests.change_status";
 
 export type Role = "admin" | "member";
 
@@ -38,9 +38,9 @@ export type UserFilters = {
   per_page?: number;
 };
 
-export type Priority = "low" | "medium" | "high" | "urgent";
+export type Priority = "LOW" | "MEDIUM" | "HIGH";
 
-export type Status = "open" | "in_progress" | "resolved";
+export type Status = "OPEN" | "IN_PROGRESS" | "RESOLVED";
 
 export type Option<T extends string> = {
   value: T;
@@ -53,7 +53,7 @@ export type StatusHistoryEntry = {
   to_status: Option<Status>;
   version: number;
   remark: string | null;
-  changed_by: { id: number; name: string } | null;
+  actor: { id: number; name: string } | null;
   created_at: string;
 };
 
@@ -101,21 +101,20 @@ export type NewServiceRequest = {
 
 export type StatusChange = {
   status: Status;
-  version: number;
+  expected_version: number;
   remark?: string;
 };
 
 export const PRIORITIES: Option<Priority>[] = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
 ];
 
 export const STATUSES: Option<Status>[] = [
-  { value: "open", label: "Open" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "resolved", label: "Resolved" },
+  { value: "OPEN", label: "Open" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "RESOLVED", label: "Resolved" },
 ];
 
-export const PAGE_SIZES = [10, 25, 50];
+export const PAGE_SIZES = [10, 25];

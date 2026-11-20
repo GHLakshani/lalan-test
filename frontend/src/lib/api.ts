@@ -5,6 +5,7 @@ import type {
   PermissionOption,
   ServiceRequestFilters,
   StatusChange,
+  StatusHistoryEntry,
   User,
   UserFilters,
   UserInput,
@@ -83,32 +84,32 @@ function toQuery(filters: Record<string, string | number | null | undefined>) {
 }
 
 export function login(email: string, password: string) {
-  return request<{ token: string; token_type: string; user: User }>("/login", {
+  return request<{ token: string; token_type: string; user: User }>("/auth/login", {
     method: "POST",
     body: { email, password, device_name: "nextjs" },
   });
 }
 
 export function logout(token: string) {
-  return request<{ message: string }>("/logout", { method: "POST", token });
+  return request<{ message: string }>("/auth/logout", { method: "POST", token });
 }
 
 export async function fetchMe(token: string) {
-  const response = await request<{ data: User }>("/me", { token });
+  const response = await request<{ data: User }>("/auth/me", { token });
   return response.data;
 }
 
 export function listServiceRequests(token: string, filters: ServiceRequestFilters = {}) {
-  return request<Paginated<ServiceRequest>>(`/service-requests${toQuery(filters)}`, { token });
+  return request<Paginated<ServiceRequest>>(`/requests${toQuery(filters)}`, { token });
 }
 
 export async function getServiceRequest(token: string, id: string | number) {
-  const response = await request<{ data: ServiceRequest }>(`/service-requests/${id}`, { token });
+  const response = await request<{ data: ServiceRequest }>(`/requests/${id}`, { token });
   return response.data;
 }
 
 export async function createServiceRequest(token: string, input: NewServiceRequest) {
-  const response = await request<{ data: ServiceRequest }>("/service-requests", {
+  const response = await request<{ data: ServiceRequest }>("/requests", {
     method: "POST",
     body: input,
     token,
@@ -117,7 +118,7 @@ export async function createServiceRequest(token: string, input: NewServiceReque
 }
 
 export async function updateServiceRequestStatus(token: string, id: string | number, change: StatusChange) {
-  const response = await request<{ data: ServiceRequest }>(`/service-requests/${id}/status`, {
+  const response = await request<{ data: ServiceRequest }>(`/requests/${id}/status`, {
     method: "PATCH",
     body: change,
     token,
@@ -151,4 +152,9 @@ export async function updateUser(token: string, id: string | number, input: User
 
 export async function deleteUser(token: string, id: string | number) {
   await request<unknown>(`/users/${id}`, { method: "DELETE", token });
+}
+
+export async function getServiceRequestHistory(token: string, id: string | number) {
+  const response = await request<{ data: StatusHistoryEntry[] }>(`/requests/${id}/history`, { token });
+  return response.data;
 }

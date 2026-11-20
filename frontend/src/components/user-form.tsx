@@ -9,7 +9,7 @@ import type { PermissionValue, Role, User, UserInput } from "@/lib/types";
 
 const roles: { value: Role; label: string; description: string }[] = [
   { value: "member", label: "Member", description: "Access is controlled by the permissions selected below." },
-  { value: "admin", label: "Administrator", description: "Full access to every action, including user management." },
+  { value: "admin", label: "Administrator", description: "Manages user accounts and has every permission for their own requests." },
 ];
 
 function firstError(errors: Record<string, string[]>, prefix: string) {
