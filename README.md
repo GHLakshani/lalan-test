@@ -35,7 +35,6 @@ database/
 routes/api.php                             API routes
 tests/Feature/                             automated Laravel tests
 frontend/                                  Next.js application
-docs/screenshots/                          screenshots used below
 ```
 
 ## Requirements
@@ -326,50 +325,6 @@ The suite contains 84 tests. The required scenarios are covered by:
 
 Other coverage includes the history endpoint (`ServiceRequestHistoryTest`), the transaction rollback when the history cannot be saved, user management (`UserManagementTest`) and permissions (`PermissionTest`).
 
-## Screenshots
-
-### Login
-
-| Login | Validation error |
-|-------|------------------|
-| ![Login](docs/screenshots/01-login.png) | ![Login validation](docs/screenshots/02-login-validation.png) |
-
-### Request workflow
-
-| Dashboard | Search and filters |
-|-----------|--------------------|
-| ![Dashboard](docs/screenshots/03-dashboard.png) | ![Filtered list](docs/screenshots/04-service-requests-filtered.png) |
-
-| Create request with validation errors | Request details |
-|---------------------------------------|-----------------|
-| ![Create validation](docs/screenshots/05-create-request-validation.png) | ![Request details](docs/screenshots/06-request-details.png) |
-
-| Status management | Status changed |
-|-------------------|----------------|
-| ![Status management](docs/screenshots/07-status-management.png) | ![Status changed](docs/screenshots/08-status-changed.png) |
-
-| Stale update rejected | Status history |
-|-----------------------|----------------|
-| ![Stale update](docs/screenshots/09-stale-update-rejected.png) | ![History](docs/screenshots/10-status-history.png) |
-
-| Not found | Mobile dashboard | Mobile menu |
-|-----------|------------------|-------------|
-| ![Not found](docs/screenshots/11-request-not-found.png) | ![Mobile dashboard](docs/screenshots/12-mobile-dashboard.png) | ![Mobile menu](docs/screenshots/13-mobile-menu.png) |
-
-### User management and access control
-
-| Users | Add user |
-|-------|----------|
-| ![Users](docs/screenshots/14-users-list.png) | ![Add user](docs/screenshots/15-add-user.png) |
-
-| Add user validation | Delete user |
-|---------------------|-------------|
-| ![Add user validation](docs/screenshots/16-add-user-validation.png) | ![Delete user](docs/screenshots/17-delete-user.png) |
-
-| Administrator opening another user's request |
-|----------------------------------------------|
-| ![Cross-user access denied](docs/screenshots/18-cross-user-access-denied.png) |
-
 ## AI Use & Verification
 
 ### AI tools used
@@ -395,7 +350,7 @@ This was followed by "note need a dashboard view when loading", which led to the
 - The Next.js development server reported that pages could not be validated for instant navigation, because the generated layout replaced the whole page with a spinner while authentication loaded. The layout was changed to always render the sidebar and page shell with loading placeholders.
 - The development server also reported that `usePathname()` was used outside a `<Suspense>` boundary on the request pages. The sidebar links were moved into their own component inside `<Suspense>`.
 - The production build failed on the edit user page because `useParams()` was used outside a `<Suspense>` boundary, which lint and the type check did not catch. The page was split into a server page that wraps the client component in `<Suspense>`.
-- The screenshots in this README were reviewed and showed three layout problems: the workflow stepper connector extended past the last step, the dashboard cards were cramped on mobile, and the sidebar sections had no spacing between them. All were fixed before the final screenshots were taken.
+- Screenshots of the running app were reviewed and showed three layout problems: the workflow stepper connector extended past the last step, the dashboard cards were cramped on mobile, and the sidebar sections had no spacing between them. All were fixed before the final screenshots were taken.
 - The seeded data is checked by `ServiceRequestHistoryTest::test_seeded_requests_have_consistent_history`, which confirms that every seeded request has a complete history, sequential versions and only valid transitions.
 - `next dev` automatically generates an `AGENTS.md` file when it detects an AI coding tool. This file was removed and is not part of the repository.
 
