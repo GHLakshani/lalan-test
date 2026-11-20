@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Permission;
 use App\Enums\ServiceRequestPriority;
 use App\Enums\ServiceRequestStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,7 +19,7 @@ class ServiceRequest extends Model
     use HasFactory;
 
     protected $attributes = [
-        'status' => 'open',
+        'status' => 'OPEN',
         'version' => 1,
     ];
 
@@ -39,7 +38,7 @@ class ServiceRequest extends Model
                 'from_status' => null,
                 'to_status' => $serviceRequest->status,
                 'version' => $serviceRequest->version,
-                'changed_by' => Auth::id() ?? $serviceRequest->user_id,
+                'actor_user_id' => Auth::id() ?? $serviceRequest->created_by,
             ]);
         });
     }
@@ -55,7 +54,7 @@ class ServiceRequest extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)->withTrashed();
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 
     public function statusHistories(): HasMany
@@ -67,7 +66,7 @@ class ServiceRequest extends Model
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $user->hasPermission(Permission::ViewAllRequests) ? $query : $query->whereBelongsTo($user);
+        return $query->whereBelongsTo($user);
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

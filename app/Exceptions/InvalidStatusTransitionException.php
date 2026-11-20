@@ -35,6 +35,6 @@ class InvalidStatusTransitionException extends RuntimeException
             'errors' => [
                 'status' => [$this->getMessage()],
             ],
-        ], 422);
+        ], 409);
     }
 }

@@ -21,7 +21,7 @@ class StaleServiceRequestException extends RuntimeException
 
     public function render(): JsonResponse
     {
-        $current = ServiceRequest::with(['user', 'statusHistories.changedBy'])->find($this->serviceRequestId);
+        $current = ServiceRequest::with(['user', 'statusHistories.actor'])->find($this->serviceRequestId);
 
         return response()->json([
             'message' => $this->getMessage(),

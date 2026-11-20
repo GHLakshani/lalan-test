@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('service_request_status_histories', function (Blueprint $table) {
+        Schema::create('request_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('service_request_id')->constrained()->cascadeOnDelete();
-            $table->string('from_status')->nullable();
-            $table->string('to_status');
+            $table->foreignId('actor_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('from_status', 20)->nullable();
+            $table->string('to_status', 20);
             $table->unsignedInteger('version');
             $table->text('remark')->nullable();
-            $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('created_at')->nullable();
 
             $table->index(['service_request_id', 'created_at']);
@@ -24,6 +24,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('service_request_status_histories');
+        Schema::dropIfExists('request_status_histories');
     }
 };

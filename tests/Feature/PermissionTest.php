@@ -20,7 +20,7 @@ class PermissionTest extends TestCase
         return [
             'title' => 'Projector not working',
             'description' => 'No signal from the meeting room projector.',
-            'priority' => 'medium',
+            'priority' => 'MEDIUM',
         ];
     }
 
@@ -28,7 +28,7 @@ class PermissionTest extends TestCase
     {
         Sanctum::actingAs(User::factory()->withPermissions(Permission::ChangeRequestStatus)->create());
 
-        $this->postJson('/api/service-requests', $this->newRequestPayload())
+        $this->postJson('/api/requests', $this->newRequestPayload())
             ->assertForbidden()
             ->assertJsonPath('message', 'You do not have permission to create service requests.');
 
@@ -39,7 +39,7 @@ class PermissionTest extends TestCase
     {
         Sanctum::actingAs(User::factory()->withPermissions(Permission::CreateRequests)->create());
 
-        $this->postJson('/api/service-requests', $this->newRequestPayload())->assertCreated();
+        $this->postJson('/api/requests', $this->newRequestPayload())->assertCreated();
     }
 
     public function test_user_without_change_status_permission_cannot_change_own_request_status(): void
@@ -48,9 +48,9 @@ class PermissionTest extends TestCase
         $serviceRequest = ServiceRequest::factory()->for($user)->status(ServiceRequestStatus::Open)->create();
         Sanctum::actingAs($user);
 
-        $this->getJson("/api/service-requests/{$serviceRequest->id}")->assertOk();
+        $this->getJson("/api/requests/{$serviceRequest->id}")->assertOk();
 
-        $this->patchJson("/api/service-requests/{$serviceRequest->id}/status", ['status' => 'in_progress', 'version' => 1])
+        $this->patchJson("/api/requests/{$serviceRequest->id}/status", ['status' => 'IN_PROGRESS', 'expected_version' => 1])
             ->assertForbidden()
             ->assertJsonPath('message', 'You do not have permission to change the status of service requests.');
 
@@ -58,39 +58,30 @@ class PermissionTest extends TestCase
         $this->assertSame(1, $serviceRequest->statusHistories()->count());
     }
 
-    public function test_view_all_permission_shows_every_request(): void
+    public function test_user_with_change_status_permission_can_change_own_request_status(): void
     {
-        $owner = User::factory()->create();
-        $agent = User::factory()->withPermissions(Permission::ViewAllRequests)->create();
-        $serviceRequest = ServiceRequest::factory()->for($owner)->create();
-        Sanctum::actingAs($agent);
+        $user = User::factory()->withPermissions(Permission::ChangeRequestStatus)->create();
+        $serviceRequest = ServiceRequest::factory()->for($user)->status(ServiceRequestStatus::Open)->create();
+        Sanctum::actingAs($user);
 
-        $this->getJson('/api/service-requests')->assertOk()->assertJsonPath('meta.total', 1);
-        $this->getJson("/api/service-requests/{$serviceRequest->id}")->assertOk();
-    }
-
-    public function test_agent_with_view_all_and_change_status_can_update_other_users_requests(): void
-    {
-        $owner = User::factory()->create();
-        $agent = User::factory()->withPermissions(Permission::ViewAllRequests, Permission::ChangeRequestStatus)->create();
-        $serviceRequest = ServiceRequest::factory()->for($owner)->status(ServiceRequestStatus::Open)->create();
-        Sanctum::actingAs($agent);
-
-        $this->patchJson("/api/service-requests/{$serviceRequest->id}/status", ['status' => 'in_progress', 'version' => 1])
+        $this->patchJson("/api/requests/{$serviceRequest->id}/status", ['status' => 'IN_PROGRESS', 'expected_version' => 1])
             ->assertOk()
-            ->assertJsonPath('data.status_history.0.changed_by.id', $agent->id);
+            ->assertJsonPath('data.status_history.0.actor.id', $user->id);
     }
 
-    public function test_change_status_without_view_all_is_limited_to_own_requests(): void
+    public function test_change_status_permission_never_grants_access_to_other_users_requests(): void
     {
         $owner = User::factory()->create();
-        $other = User::factory()->withPermissions(Permission::ChangeRequestStatus)->create();
+        $other = User::factory()->withPermissions(Permission::CreateRequests, Permission::ChangeRequestStatus)->create();
         $serviceRequest = ServiceRequest::factory()->for($owner)->status(ServiceRequestStatus::Open)->create();
         Sanctum::actingAs($other);
 
-        $this->patchJson("/api/service-requests/{$serviceRequest->id}/status", ['status' => 'in_progress', 'version' => 1])
+        $this->patchJson("/api/requests/{$serviceRequest->id}/status", ['status' => 'IN_PROGRESS', 'expected_version' => 1])
             ->assertForbidden()
             ->assertJsonPath('message', 'You do not have access to this service request.');
+
+        $this->assertSame(ServiceRequestStatus::Open, $serviceRequest->fresh()->status);
+        $this->assertSame(1, $serviceRequest->statusHistories()->count());
     }
 
     public function test_permission_changes_take_effect_immediately(): void
@@ -99,7 +90,7 @@ class PermissionTest extends TestCase
         $member = User::factory()->withPermissions(Permission::CreateRequests)->create();
         $token = $member->createToken('api')->plainTextToken;
 
-        $this->withToken($token)->postJson('/api/service-requests', $this->newRequestPayload())->assertCreated();
+        $this->withToken($token)->postJson('/api/requests', $this->newRequestPayload())->assertCreated();
 
         Sanctum::actingAs($admin);
         $this->putJson("/api/users/{$member->id}", [
@@ -111,8 +102,8 @@ class PermissionTest extends TestCase
 
         $this->app['auth']->forgetGuards();
 
-        $this->withToken($token)->postJson('/api/service-requests', $this->newRequestPayload())->assertForbidden();
-        $this->withToken($token)->getJson('/api/me')->assertOk()->assertJsonPath('data.permissions', []);
+        $this->withToken($token)->postJson('/api/requests', $this->newRequestPayload())->assertForbidden();
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertJsonPath('data.permissions', []);
     }
 
     public function test_demo_accounts_have_expected_permissions(): void
@@ -121,12 +112,11 @@ class PermissionTest extends TestCase
 
         $admin = User::where('email', 'admin@example.com')->firstOrFail();
         $user = User::where('email', 'user@example.com')->firstOrFail();
-        $agent = User::where('email', 'agent@example.com')->firstOrFail();
 
+        $this->assertSame(2, User::count());
         $this->assertTrue($admin->isAdmin());
         $this->assertSame(Permission::values(Permission::cases()), $admin->effectivePermissions());
+        $this->assertFalse($user->isAdmin());
         $this->assertSame(['requests.create', 'requests.change_status'], $user->effectivePermissions());
-        $this->assertSame(['requests.view_all', 'requests.change_status'], $agent->effectivePermissions());
-        $this->assertFalse($agent->hasPermission(Permission::CreateRequests));
     }
 }

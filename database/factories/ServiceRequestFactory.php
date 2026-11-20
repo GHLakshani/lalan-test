@@ -7,6 +7,7 @@ use App\Enums\ServiceRequestStatus;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class ServiceRequestFactory extends Factory
 {
@@ -38,9 +39,9 @@ class ServiceRequestFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'created_by' => User::factory(),
             'title' => fake()->randomElement(self::TITLES),
-            'description' => fake()->paragraph(),
+            'description' => Str::limit(fake()->paragraph(4), 480, ''),
             'priority' => fake()->randomElement(ServiceRequestPriority::cases()),
             'status' => fake()->randomElement(ServiceRequestStatus::cases()),
         ];

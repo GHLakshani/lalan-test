@@ -99,7 +99,7 @@ class UserManagementTest extends TestCase
         $this->assertTrue(Hash::check('secret-pass', $user->password));
         $this->assertFalse($user->isAdmin());
 
-        $this->postJson('/api/login', ['email' => 'new.member@example.com', 'password' => 'secret-pass'])
+        $this->postJson('/api/auth/login', ['email' => 'new.member@example.com', 'password' => 'secret-pass'])
             ->assertOk()
             ->assertJsonPath('user.permissions', ['requests.create']);
     }
@@ -143,12 +143,12 @@ class UserManagementTest extends TestCase
             'name' => 'Renamed Member',
             'email' => 'renamed@example.com',
             'role' => 'member',
-            'permissions' => ['requests.view_all', 'requests.change_status'],
+            'permissions' => ['requests.change_status'],
         ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Renamed Member')
             ->assertJsonPath('data.email', 'renamed@example.com')
-            ->assertJsonPath('data.permissions', ['requests.view_all', 'requests.change_status']);
+            ->assertJsonPath('data.permissions', ['requests.change_status']);
 
         $this->assertTrue(Hash::check('password', $member->fresh()->password));
 
@@ -218,18 +218,19 @@ class UserManagementTest extends TestCase
         $this->assertSame(0, $member->tokens()->count());
         $this->assertDatabaseHas('service_requests', ['id' => $serviceRequest->id]);
 
-        $this->getJson("/api/service-requests/{$serviceRequest->id}")
-            ->assertOk()
-            ->assertJsonPath('data.requested_by.name', 'Leaving Member')
-            ->assertJsonPath('data.status_history.0.changed_by.name', 'Leaving Member');
+        $kept = ServiceRequest::with(['user', 'statusHistories.actor'])->findOrFail($serviceRequest->id);
+        $this->assertSame('Leaving Member', $kept->user->name);
+        $this->assertSame('Leaving Member', $kept->statusHistories->first()->actor->name);
+
+        $this->getJson("/api/requests/{$serviceRequest->id}")->assertForbidden();
 
         $this->getJson('/api/users')->assertJsonPath('meta.total', 1);
         $this->getJson("/api/users/{$member->id}")->assertNotFound();
 
         $this->app['auth']->forgetGuards();
 
-        $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
-        $this->postJson('/api/login', ['email' => $member->email, 'password' => 'password'])
+        $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
+        $this->postJson('/api/auth/login', ['email' => $member->email, 'password' => 'password'])
             ->assertUnprocessable();
     }
 
@@ -242,8 +243,8 @@ class UserManagementTest extends TestCase
             ->assertJsonCount(count(Permission::cases()), 'data')
             ->assertJsonPath('data.0.value', 'requests.create')
             ->assertJsonPath('data.0.default', true)
-            ->assertJsonPath('data.1.value', 'requests.view_all')
-            ->assertJsonPath('data.1.default', false)
+            ->assertJsonPath('data.1.value', 'requests.change_status')
+            ->assertJsonPath('data.1.default', true)
             ->assertJsonStructure(['data' => [['value', 'label', 'description', 'default']]]);
     }
 }

@@ -24,7 +24,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'secret123']);
 
-        $this->postJson('/api/login', [
+        $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'secret123',
         ])
@@ -37,7 +37,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'secret123']);
 
-        $this->postJson('/api/login', [
+        $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ])
@@ -47,7 +47,7 @@ class AuthTest extends TestCase
 
     public function test_login_requires_email_and_password(): void
     {
-        $this->postJson('/api/login', [])
+        $this->postJson('/api/auth/login', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'password']);
     }
@@ -58,7 +58,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('api')->plainTextToken;
 
         $this->withToken($token)
-            ->getJson('/api/me')
+            ->getJson('/api/auth/me')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.email', $user->email)
@@ -67,7 +67,7 @@ class AuthTest extends TestCase
 
     public function test_guest_cannot_view_profile(): void
     {
-        $this->getJson('/api/me')->assertUnauthorized();
+        $this->getJson('/api/auth/me')->assertUnauthorized();
     }
 
     public function test_user_can_logout(): void
@@ -76,9 +76,23 @@ class AuthTest extends TestCase
         $token = $user->createToken('api')->plainTextToken;
 
         $this->withToken($token)
-            ->postJson('/api/logout')
+            ->postJson('/api/auth/logout')
             ->assertOk();
 
         $this->assertSame(0, PersonalAccessToken::count());
+    }
+
+    public function test_tokens_expire_after_the_configured_lifetime(): void
+    {
+        config(['sanctum.expiration' => 480]);
+        $user = User::factory()->create();
+        $token = $user->createToken('api')->plainTextToken;
+
+        $this->travel(479)->minutes();
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk();
+
+        $this->app['auth']->forgetGuards();
+        $this->travel(2)->minutes();
+        $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
     }
 }

@@ -5,14 +5,12 @@ namespace App\Enums;
 enum Permission: string
 {
     case CreateRequests = 'requests.create';
-    case ViewAllRequests = 'requests.view_all';
     case ChangeRequestStatus = 'requests.change_status';
 
     public function label(): string
     {
         return match ($this) {
             self::CreateRequests => 'Create requests',
-            self::ViewAllRequests => 'View all requests',
             self::ChangeRequestStatus => 'Change request status',
         };
     }
@@ -21,8 +19,7 @@ enum Permission: string
     {
         return match ($this) {
             self::CreateRequests => 'Submit new service requests.',
-            self::ViewAllRequests => 'See and open service requests created by every user, not only their own.',
-            self::ChangeRequestStatus => 'Move requests they can see through the Open, In Progress and Resolved workflow.',
+            self::ChangeRequestStatus => 'Move their own requests through the Open, In Progress and Resolved workflow.',
         };
     }
 

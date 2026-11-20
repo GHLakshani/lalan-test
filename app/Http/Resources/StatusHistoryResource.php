@@ -21,9 +21,9 @@ class StatusHistoryResource extends JsonResource
             ],
             'version' => $this->version,
             'remark' => $this->remark,
-            'changed_by' => $this->whenLoaded('changedBy', fn () => $this->changedBy ? [
-                'id' => $this->changedBy->id,
-                'name' => $this->changedBy->name,
+            'actor' => $this->whenLoaded('actor', fn () => $this->actor ? [
+                'id' => $this->actor->id,
+                'name' => $this->actor->name,
             ] : null),
             'created_at' => $this->created_at,
         ];

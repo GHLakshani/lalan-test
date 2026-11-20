@@ -15,10 +15,10 @@ class ChangeServiceRequestStatus
         ServiceRequest $serviceRequest,
         ServiceRequestStatus $status,
         int $expectedVersion,
-        ?User $changedBy = null,
+        ?User $actor = null,
         ?string $remark = null,
     ): ServiceRequest {
-        return DB::transaction(function () use ($serviceRequest, $status, $expectedVersion, $changedBy, $remark) {
+        return DB::transaction(function () use ($serviceRequest, $status, $expectedVersion, $actor, $remark) {
             $current = ServiceRequest::query()
                 ->whereKey($serviceRequest->getKey())
                 ->lockForUpdate()
@@ -54,7 +54,7 @@ class ChangeServiceRequestStatus
                 'to_status' => $status,
                 'version' => $newVersion,
                 'remark' => filled($remark) ? trim($remark) : null,
-                'changed_by' => $changedBy?->getKey(),
+                'actor_user_id' => $actor?->getKey(),
             ]);
 
             return $current->refresh();

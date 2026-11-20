@@ -11,7 +11,7 @@ class ServiceRequestPolicy
 {
     public function view(User $user, ServiceRequest $serviceRequest): Response
     {
-        return $user->hasPermission(Permission::ViewAllRequests) || $serviceRequest->user_id === $user->id
+        return $serviceRequest->created_by === $user->id
             ? Response::allow()
             : Response::deny('You do not have access to this service request.');
     }

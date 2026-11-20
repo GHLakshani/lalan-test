@@ -34,16 +34,15 @@ class ServiceRequestSeeder extends Seeder
     public function run(): void
     {
         $users = User::whereIn('email', ['admin@example.com', 'user@example.com'])->get();
-        $agent = $users->firstWhere('email', 'admin@example.com') ?? $users->first();
 
         try {
-            $users->each(function (User $user) use ($agent) {
+            $users->each(function (User $user) {
                 if ($user->serviceRequests()->exists()) {
                     return;
                 }
 
                 for ($count = 0; $count < 20; $count++) {
-                    $this->seedRequest($user, $agent);
+                    $this->seedRequest($user);
                 }
             });
         } finally {
@@ -52,7 +51,7 @@ class ServiceRequestSeeder extends Seeder
         }
     }
 
-    private function seedRequest(User $owner, User $agent): void
+    private function seedRequest(User $owner): void
     {
         $finalStatus = fake()->randomElement(ServiceRequestStatus::cases());
         $time = Carbon::now()->subDays(fake()->numberBetween(8, 45))->subMinutes(fake()->numberBetween(0, 1440));
@@ -75,7 +74,7 @@ class ServiceRequestSeeder extends Seeder
                 $serviceRequest,
                 $next,
                 $serviceRequest->version,
-                $agent,
+                $owner,
                 fake()->randomElement(self::REMARKS[$next->value]),
             );
         }

@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['from_status', 'to_status', 'version', 'remark', 'changed_by'])]
+#[Fillable(['from_status', 'to_status', 'version', 'remark', 'actor_user_id'])]
 class ServiceRequestStatusHistory extends Model
 {
     const UPDATED_AT = null;
+
+    protected $table = 'request_status_histories';
 
     protected function casts(): array
     {
@@ -26,8 +28,8 @@ class ServiceRequestStatusHistory extends Model
         return $this->belongsTo(ServiceRequest::class);
     }
 
-    public function changedBy(): BelongsTo
+    public function actor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'changed_by')->withTrashed();
+        return $this->belongsTo(User::class, 'actor_user_id')->withTrashed();
     }
 }

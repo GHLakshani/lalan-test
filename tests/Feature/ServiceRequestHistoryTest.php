@@ -41,27 +41,27 @@ class ServiceRequestHistoryTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
-        $response = $this->postJson('/api/service-requests', [
+        $response = $this->postJson('/api/requests', [
             'title' => 'Monitor flickering',
             'description' => 'The left monitor flickers every few seconds.',
-            'priority' => 'medium',
+            'priority' => 'MEDIUM',
         ])
             ->assertCreated()
             ->assertJsonPath('data.version', 1)
-            ->assertJsonPath('data.next_status.value', 'in_progress')
+            ->assertJsonPath('data.next_status.value', 'IN_PROGRESS')
             ->assertJsonCount(1, 'data.status_history')
             ->assertJsonPath('data.status_history.0.from_status', null)
-            ->assertJsonPath('data.status_history.0.to_status.value', 'open')
+            ->assertJsonPath('data.status_history.0.to_status.value', 'OPEN')
             ->assertJsonPath('data.status_history.0.version', 1)
             ->assertJsonPath('data.status_history.0.remark', null)
-            ->assertJsonPath('data.status_history.0.changed_by.id', $this->user->id);
+            ->assertJsonPath('data.status_history.0.actor.id', $this->user->id);
 
-        $this->assertDatabaseHas('service_request_status_histories', [
+        $this->assertDatabaseHas('request_status_histories', [
             'service_request_id' => $response->json('data.id'),
             'from_status' => null,
-            'to_status' => 'open',
+            'to_status' => 'OPEN',
             'version' => 1,
-            'changed_by' => $this->user->id,
+            'actor_user_id' => $this->user->id,
         ]);
     }
 
@@ -120,24 +120,65 @@ class ServiceRequestHistoryTest extends TestCase
 
         $this->travelBack();
 
-        $this->getJson("/api/service-requests/{$serviceRequest->id}")
+        $this->getJson("/api/requests/{$serviceRequest->id}")
             ->assertOk()
-            ->assertJsonPath('data.status.value', 'resolved')
+            ->assertJsonPath('data.status.value', 'RESOLVED')
             ->assertJsonPath('data.version', 3)
             ->assertJsonPath('data.next_status', null)
             ->assertJsonCount(3, 'data.status_history')
-            ->assertJsonPath('data.status_history.0.from_status.value', 'in_progress')
-            ->assertJsonPath('data.status_history.0.to_status.value', 'resolved')
+            ->assertJsonPath('data.status_history.0.from_status.value', 'IN_PROGRESS')
+            ->assertJsonPath('data.status_history.0.to_status.value', 'RESOLVED')
             ->assertJsonPath('data.status_history.0.version', 3)
             ->assertJsonPath('data.status_history.0.remark', 'Fixed the cable.')
-            ->assertJsonPath('data.status_history.1.to_status.value', 'in_progress')
+            ->assertJsonPath('data.status_history.1.to_status.value', 'IN_PROGRESS')
             ->assertJsonPath('data.status_history.2.from_status', null)
-            ->assertJsonPath('data.status_history.2.to_status.value', 'open')
+            ->assertJsonPath('data.status_history.2.to_status.value', 'OPEN')
             ->assertJsonStructure([
                 'data' => [
-                    'status_history' => [['id', 'from_status', 'to_status', 'version', 'remark', 'changed_by', 'created_at']],
+                    'status_history' => [['id', 'from_status', 'to_status', 'version', 'remark', 'actor', 'created_at']],
                 ],
             ]);
+    }
+
+    public function test_history_endpoint_returns_the_owners_audit_trail_in_chronological_order(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->travelTo(now()->subDays(3));
+        $serviceRequest = ServiceRequest::factory()->for($this->user)->status(ServiceRequestStatus::Open)->create();
+
+        $this->travelTo(now()->addDay());
+        $serviceRequest = $this->changeStatus($serviceRequest, ServiceRequestStatus::InProgress, 'Technician assigned');
+
+        $this->travelTo(now()->addDay());
+        $this->changeStatus($serviceRequest, ServiceRequestStatus::Resolved);
+
+        $this->travelBack();
+
+        $this->getJson("/api/requests/{$serviceRequest->id}/history")
+            ->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('data.0.from_status', null)
+            ->assertJsonPath('data.0.to_status.value', 'OPEN')
+            ->assertJsonPath('data.0.version', 1)
+            ->assertJsonPath('data.1.from_status.value', 'OPEN')
+            ->assertJsonPath('data.1.to_status.value', 'IN_PROGRESS')
+            ->assertJsonPath('data.1.remark', 'Technician assigned')
+            ->assertJsonPath('data.1.actor.id', $this->user->id)
+            ->assertJsonPath('data.2.to_status.value', 'RESOLVED')
+            ->assertJsonPath('data.2.version', 3)
+            ->assertJsonStructure(['data' => [['id', 'from_status', 'to_status', 'version', 'remark', 'actor', 'created_at']]]);
+    }
+
+    public function test_history_endpoint_rejects_guests_and_unknown_requests(): void
+    {
+        $serviceRequest = ServiceRequest::factory()->for($this->user)->create();
+
+        $this->getJson("/api/requests/{$serviceRequest->id}/history")->assertUnauthorized();
+
+        Sanctum::actingAs($this->user);
+
+        $this->getJson('/api/requests/999999/history')->assertNotFound();
     }
 
     public function test_index_includes_version_but_not_history(): void
@@ -145,7 +186,7 @@ class ServiceRequestHistoryTest extends TestCase
         Sanctum::actingAs($this->user);
         ServiceRequest::factory()->for($this->user)->create();
 
-        $this->getJson('/api/service-requests')
+        $this->getJson('/api/requests')
             ->assertOk()
             ->assertJsonPath('data.0.version', 1)
             ->assertJsonMissingPath('data.0.status_history');
@@ -157,7 +198,7 @@ class ServiceRequestHistoryTest extends TestCase
 
         $serviceRequest->delete();
 
-        $this->assertDatabaseCount('service_request_status_histories', 0);
+        $this->assertDatabaseCount('request_status_histories', 0);
     }
 
     public function test_seeded_requests_have_consistent_history(): void
@@ -174,8 +215,9 @@ class ServiceRequestHistoryTest extends TestCase
             $this->assertSame(ServiceRequestStatus::Open, $history->last()->to_status);
             $this->assertNull($history->last()->from_status);
 
-            $history->reverse()->values()->each(function ($entry, $index) {
+            $history->reverse()->values()->each(function ($entry, $index) use ($serviceRequest) {
                 $this->assertSame($index + 1, $entry->version);
+                $this->assertSame($serviceRequest->created_by, $entry->actor_user_id);
 
                 if ($entry->from_status !== null) {
                     $this->assertTrue($entry->from_status->canTransitionTo($entry->to_status));

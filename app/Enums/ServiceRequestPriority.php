@@ -4,10 +4,9 @@ namespace App\Enums;
 
 enum ServiceRequestPriority: string
 {
-    case Low = 'low';
-    case Medium = 'medium';
-    case High = 'high';
-    case Urgent = 'urgent';
+    case Low = 'LOW';
+    case Medium = 'MEDIUM';
+    case High = 'HIGH';
 
     public function label(): string
     {
@@ -15,7 +14,6 @@ enum ServiceRequestPriority: string
             self::Low => 'Low',
             self::Medium => 'Medium',
             self::High => 'High',
-            self::Urgent => 'Urgent',
         };
     }
 }

@@ -17,7 +17,7 @@ class UpdateServiceRequestStatusRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::enum(ServiceRequestStatus::class)],
-            'version' => ['required', 'integer', 'min:1'],
+            'expected_version' => ['required', 'integer', 'min:1'],
             'remark' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -25,7 +25,7 @@ class UpdateServiceRequestStatusRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'version.required' => 'The version of the request you are updating is required.',
+            'expected_version.required' => 'The version of the request you are updating is required.',
         ];
     }
 }

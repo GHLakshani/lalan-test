@@ -23,12 +23,6 @@ class DemoUserSeeder extends Seeder
                 'is_admin' => false,
                 'permissions' => Permission::defaults(),
             ],
-            [
-                'name' => 'Support Agent',
-                'email' => 'agent@example.com',
-                'is_admin' => false,
-                'permissions' => [Permission::ViewAllRequests, Permission::ChangeRequestStatus],
-            ],
         ];
 
         foreach ($accounts as $account) {

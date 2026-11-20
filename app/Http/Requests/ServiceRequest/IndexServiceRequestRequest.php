@@ -20,7 +20,7 @@ class IndexServiceRequestRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:255'],
             'priority' => ['nullable', Rule::enum(ServiceRequestPriority::class)],
             'status' => ['nullable', Rule::enum(ServiceRequestStatus::class)],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:25'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
     }

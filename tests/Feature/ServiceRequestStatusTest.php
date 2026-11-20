@@ -47,14 +47,14 @@ class ServiceRequestStatusTest extends TestCase
 
     private function patchStatus(ServiceRequest $serviceRequest, array $payload)
     {
-        return $this->patchJson("/api/service-requests/{$serviceRequest->id}/status", $payload);
+        return $this->patchJson("/api/requests/{$serviceRequest->id}/status", $payload);
     }
 
     public function test_guest_cannot_change_status(): void
     {
         $serviceRequest = $this->openRequest();
 
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 1])->assertUnauthorized();
+        $this->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 1])->assertUnauthorized();
     }
 
     public function test_status_moves_from_open_to_in_progress(): void
@@ -63,23 +63,23 @@ class ServiceRequestStatusTest extends TestCase
         $serviceRequest = $this->openRequest();
 
         $this->patchStatus($serviceRequest, [
-            'status' => 'in_progress',
-            'version' => 1,
+            'status' => 'IN_PROGRESS',
+            'expected_version' => 1,
             'remark' => '  Technician assigned.  ',
         ])
             ->assertOk()
-            ->assertJsonPath('data.status.value', 'in_progress')
+            ->assertJsonPath('data.status.value', 'IN_PROGRESS')
             ->assertJsonPath('data.version', 2)
-            ->assertJsonPath('data.next_status.value', 'resolved')
-            ->assertJsonPath('data.status_history.0.from_status.value', 'open')
-            ->assertJsonPath('data.status_history.0.to_status.value', 'in_progress')
+            ->assertJsonPath('data.next_status.value', 'RESOLVED')
+            ->assertJsonPath('data.status_history.0.from_status.value', 'OPEN')
+            ->assertJsonPath('data.status_history.0.to_status.value', 'IN_PROGRESS')
             ->assertJsonPath('data.status_history.0.version', 2)
             ->assertJsonPath('data.status_history.0.remark', 'Technician assigned.')
-            ->assertJsonPath('data.status_history.0.changed_by.id', $this->user->id);
+            ->assertJsonPath('data.status_history.0.actor.id', $this->user->id);
 
         $this->assertDatabaseHas('service_requests', [
             'id' => $serviceRequest->id,
-            'status' => 'in_progress',
+            'status' => 'IN_PROGRESS',
             'version' => 2,
         ]);
     }
@@ -89,9 +89,9 @@ class ServiceRequestStatusTest extends TestCase
         Sanctum::actingAs($this->user);
         $serviceRequest = $this->requestWithStatus(ServiceRequestStatus::InProgress);
 
-        $this->patchStatus($serviceRequest, ['status' => 'resolved', 'version' => 2])
+        $this->patchStatus($serviceRequest, ['status' => 'RESOLVED', 'expected_version' => 2])
             ->assertOk()
-            ->assertJsonPath('data.status.value', 'resolved')
+            ->assertJsonPath('data.status.value', 'RESOLVED')
             ->assertJsonPath('data.version', 3)
             ->assertJsonPath('data.next_status', null)
             ->assertJsonPath('data.status_history.0.remark', null);
@@ -102,7 +102,7 @@ class ServiceRequestStatusTest extends TestCase
         Sanctum::actingAs($this->user);
         $serviceRequest = $this->openRequest();
 
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 1, 'remark' => '   '])
+        $this->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 1, 'remark' => '   '])
             ->assertOk()
             ->assertJsonPath('data.status_history.0.remark', null);
     }
@@ -114,10 +114,10 @@ class ServiceRequestStatusTest extends TestCase
 
         $this->assertSame(1, $serviceRequest->statusHistories()->count());
 
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 1])->assertOk();
+        $this->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 1])->assertOk();
         $this->assertSame(2, $serviceRequest->statusHistories()->count());
 
-        $this->patchStatus($serviceRequest, ['status' => 'resolved', 'version' => 2])->assertOk();
+        $this->patchStatus($serviceRequest, ['status' => 'RESOLVED', 'expected_version' => 2])->assertOk();
         $this->assertSame(3, $serviceRequest->statusHistories()->count());
 
         $this->assertSame([1, 2, 3], $serviceRequest->statusHistories()->pluck('version')->sort()->values()->all());
@@ -126,13 +126,13 @@ class ServiceRequestStatusTest extends TestCase
     public static function invalidTransitions(): array
     {
         return [
-            'skip from open to resolved' => [ServiceRequestStatus::Open, 'resolved', 'Cannot change status from Open to Resolved. The next allowed status is In Progress.'],
-            'stay open' => [ServiceRequestStatus::Open, 'open', 'This request is already Open.'],
-            'reverse from in progress to open' => [ServiceRequestStatus::InProgress, 'open', 'Cannot change status from In Progress to Open. The next allowed status is Resolved.'],
-            'stay in progress' => [ServiceRequestStatus::InProgress, 'in_progress', 'This request is already In Progress.'],
-            'reverse from resolved to in progress' => [ServiceRequestStatus::Resolved, 'in_progress', 'This request is already Resolved. Its status can no longer be changed.'],
-            'reverse from resolved to open' => [ServiceRequestStatus::Resolved, 'open', 'This request is already Resolved. Its status can no longer be changed.'],
-            'stay resolved' => [ServiceRequestStatus::Resolved, 'resolved', 'This request is already Resolved. Its status can no longer be changed.'],
+            'skip from open to resolved' => [ServiceRequestStatus::Open, 'RESOLVED', 'Cannot change status from Open to Resolved. The next allowed status is In Progress.'],
+            'stay open' => [ServiceRequestStatus::Open, 'OPEN', 'This request is already Open.'],
+            'reverse from in progress to open' => [ServiceRequestStatus::InProgress, 'OPEN', 'Cannot change status from In Progress to Open. The next allowed status is Resolved.'],
+            'stay in progress' => [ServiceRequestStatus::InProgress, 'IN_PROGRESS', 'This request is already In Progress.'],
+            'reverse from resolved to in progress' => [ServiceRequestStatus::Resolved, 'IN_PROGRESS', 'This request is already Resolved. Its status can no longer be changed.'],
+            'reverse from resolved to open' => [ServiceRequestStatus::Resolved, 'OPEN', 'This request is already Resolved. Its status can no longer be changed.'],
+            'stay resolved' => [ServiceRequestStatus::Resolved, 'RESOLVED', 'This request is already Resolved. Its status can no longer be changed.'],
         ];
     }
 
@@ -143,8 +143,8 @@ class ServiceRequestStatusTest extends TestCase
         $serviceRequest = $this->requestWithStatus($from);
         $historyCount = $serviceRequest->statusHistories()->count();
 
-        $this->patchStatus($serviceRequest, ['status' => $to, 'version' => $serviceRequest->version])
-            ->assertUnprocessable()
+        $this->patchStatus($serviceRequest, ['status' => $to, 'expected_version' => $serviceRequest->version])
+            ->assertConflict()
             ->assertJsonPath('message', $message)
             ->assertJsonPath('errors.status.0', $message);
 
@@ -161,22 +161,22 @@ class ServiceRequestStatusTest extends TestCase
 
         $this->patchStatus($serviceRequest, [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['status', 'version']);
+            ->assertJsonValidationErrors(['status', 'expected_version']);
 
         $this->patchStatus($serviceRequest, [
             'status' => 'closed',
-            'version' => 'abc',
+            'expected_version' => 'abc',
             'remark' => str_repeat('a', 1001),
         ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['status', 'version', 'remark']);
+            ->assertJsonValidationErrors(['status', 'expected_version', 'remark']);
     }
 
     public function test_status_change_for_missing_request_returns_not_found(): void
     {
         Sanctum::actingAs($this->user);
 
-        $this->patchJson('/api/service-requests/999/status', ['status' => 'in_progress', 'version' => 1])
+        $this->patchJson('/api/requests/999/status', ['status' => 'IN_PROGRESS', 'expected_version' => 1])
             ->assertNotFound();
     }
 
@@ -185,38 +185,40 @@ class ServiceRequestStatusTest extends TestCase
         Sanctum::actingAs($this->user);
         $serviceRequest = $this->openRequest();
 
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 1])->assertOk();
+        $this->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 1])->assertOk();
 
-        $this->patchStatus($serviceRequest, ['status' => 'resolved', 'version' => 1, 'remark' => 'Stale update'])
+        $this->patchStatus($serviceRequest, ['status' => 'RESOLVED', 'expected_version' => 1, 'remark' => 'Stale update'])
             ->assertConflict()
             ->assertJsonPath('current_version', 2)
-            ->assertJsonPath('data.status.value', 'in_progress')
+            ->assertJsonPath('data.status.value', 'IN_PROGRESS')
             ->assertJsonPath('data.version', 2)
             ->assertJsonCount(2, 'data.status_history');
 
         $fresh = $serviceRequest->fresh();
         $this->assertSame(ServiceRequestStatus::InProgress, $fresh->status);
         $this->assertSame(2, $fresh->version);
-        $this->assertDatabaseMissing('service_request_status_histories', ['remark' => 'Stale update']);
+        $this->assertDatabaseMissing('request_status_histories', ['remark' => 'Stale update']);
     }
 
-    public function test_two_users_with_the_same_version_only_first_wins(): void
+    public function test_two_sessions_with_the_same_version_only_first_wins(): void
     {
-        $first = User::factory()->admin()->create();
-        $second = User::factory()->admin()->create();
         $serviceRequest = $this->openRequest();
+        $laptopToken = $this->user->createToken('laptop')->plainTextToken;
+        $phoneToken = $this->user->createToken('phone')->plainTextToken;
 
-        Sanctum::actingAs($first);
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 1, 'remark' => 'First'])
+        $this->withToken($laptopToken)
+            ->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 1, 'remark' => 'First'])
             ->assertOk();
 
-        Sanctum::actingAs($second);
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 1, 'remark' => 'Second'])
+        $this->app['auth']->forgetGuards();
+
+        $this->withToken($phoneToken)
+            ->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 1, 'remark' => 'Second'])
             ->assertConflict();
 
         $this->assertSame(2, $serviceRequest->statusHistories()->count());
-        $this->assertDatabaseHas('service_request_status_histories', ['remark' => 'First', 'changed_by' => $first->id]);
-        $this->assertDatabaseMissing('service_request_status_histories', ['remark' => 'Second']);
+        $this->assertDatabaseHas('request_status_histories', ['remark' => 'First', 'actor_user_id' => $this->user->id]);
+        $this->assertDatabaseMissing('request_status_histories', ['remark' => 'Second']);
     }
 
     public function test_future_version_is_rejected_with_conflict(): void
@@ -224,7 +226,7 @@ class ServiceRequestStatusTest extends TestCase
         Sanctum::actingAs($this->user);
         $serviceRequest = $this->openRequest();
 
-        $this->patchStatus($serviceRequest, ['status' => 'in_progress', 'version' => 5])
+        $this->patchStatus($serviceRequest, ['status' => 'IN_PROGRESS', 'expected_version' => 5])
             ->assertConflict()
             ->assertJsonPath('current_version', 1);
 
@@ -236,7 +238,7 @@ class ServiceRequestStatusTest extends TestCase
         Sanctum::actingAs($this->user);
         $serviceRequest = $this->requestWithStatus(ServiceRequestStatus::Resolved);
 
-        $this->patchStatus($serviceRequest, ['status' => 'resolved', 'version' => 1])
+        $this->patchStatus($serviceRequest, ['status' => 'RESOLVED', 'expected_version' => 1])
             ->assertConflict();
     }
 

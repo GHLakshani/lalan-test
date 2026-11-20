@@ -9,6 +9,7 @@ use App\Http\Requests\ServiceRequest\IndexServiceRequestRequest;
 use App\Http\Requests\ServiceRequest\StoreServiceRequestRequest;
 use App\Http\Requests\ServiceRequest\UpdateServiceRequestStatusRequest;
 use App\Http\Resources\ServiceRequestResource;
+use App\Http\Resources\StatusHistoryResource;
 use App\Models\ServiceRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -40,7 +41,7 @@ class ServiceRequestController extends Controller
             ->serviceRequests()
             ->create($request->validated());
 
-        return ServiceRequestResource::make($serviceRequest->refresh()->load(['user', 'statusHistories.changedBy']))
+        return ServiceRequestResource::make($serviceRequest->refresh()->load(['user', 'statusHistories.actor']))
             ->response()
             ->setStatusCode(201);
     }
@@ -49,7 +50,7 @@ class ServiceRequestController extends Controller
     {
         Gate::authorize('view', $serviceRequest);
 
-        return ServiceRequestResource::make($serviceRequest->load(['user', 'statusHistories.changedBy']));
+        return ServiceRequestResource::make($serviceRequest->load(['user', 'statusHistories.actor']));
     }
 
     public function updateStatus(
@@ -62,11 +63,25 @@ class ServiceRequestController extends Controller
         $updated = $changeStatus->handle(
             $serviceRequest,
             ServiceRequestStatus::from($request->validated('status')),
-            (int) $request->validated('version'),
+            (int) $request->validated('expected_version'),
             $request->user(),
             $request->validated('remark'),
         );
 
-        return ServiceRequestResource::make($updated->load(['user', 'statusHistories.changedBy']));
+        return ServiceRequestResource::make($updated->load(['user', 'statusHistories.actor']));
+    }
+
+    public function history(ServiceRequest $serviceRequest): AnonymousResourceCollection
+    {
+        Gate::authorize('view', $serviceRequest);
+
+        $history = $serviceRequest->statusHistories()
+            ->reorder()
+            ->oldest()
+            ->oldest('id')
+            ->with('actor')
+            ->get();
+
+        return StatusHistoryResource::collection($history);
     }
 }

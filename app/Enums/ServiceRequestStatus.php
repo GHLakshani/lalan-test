@@ -4,9 +4,9 @@ namespace App\Enums;
 
 enum ServiceRequestStatus: string
 {
-    case Open = 'open';
-    case InProgress = 'in_progress';
-    case Resolved = 'resolved';
+    case Open = 'OPEN';
+    case InProgress = 'IN_PROGRESS';
+    case Resolved = 'RESOLVED';
 
     public function label(): string
     {
